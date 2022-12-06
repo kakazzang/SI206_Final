@@ -82,7 +82,7 @@ def add_name_data(data, cur, conn):
         name_list.append(name)
     # print(name_list)
     try:
-        cur.execute('SELECT id FROM names WHERE id = (SELECT MAX(id) FROM names')
+        cur.execute('SELECT id FROM names WHERE id = (SELECT MAX(id) FROM names)')
         start = cur.fetchone()
         start = start[0]
     except:
@@ -97,7 +97,7 @@ def add_name_data(data, cur, conn):
 def add_spotify_data(data, cur, conn):
     cur.execute("CREATE TABLE IF NOT EXISTS spotify (id INTEGER PRIMARY KEY, popularity INTEGER, followers INTEGER)")
     try:
-        cur.execute('SELECT id FROM spotify WHERE id = (SELECT MAX(id) FROM spotify')
+        cur.execute('SELECT id FROM spotify WHERE id = (SELECT MAX(id) FROM spotify)')
         start = cur.fetchone()
         start = start[0]
     except:
@@ -114,7 +114,7 @@ def add_spotify_data(data, cur, conn):
 def add_youtube_data(data, cur, conn):
     cur.execute("CREATE TABLE IF NOT EXISTS youtube (id INTEGER PRIMARY KEY, viewcount INTEGER, subscribercount INTEGER, videocount INTEGER)")
     try:
-        cur.execute('SELECT id FROM youtube WHERE id = (SELECT MAX(id) FROM youtube')
+        cur.execute('SELECT id FROM youtube WHERE id = (SELECT MAX(id) FROM youtube)')
         start = cur.fetchone()
         start = start[0]
     except:
@@ -143,7 +143,7 @@ def main():
     add_name_data(data1,cur,conn)
     add_spotify_data(data1,cur,conn)
     add_youtube_data(data2,cur,conn)
-    
+
     # dir_path = os.path.dirname(os.path.realpath(__file__))
     # filename1 = dir_path + '/' + "spotify.json"
     # filename2 = dir_path + '/' + 'youtube.json'
