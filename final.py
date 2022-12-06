@@ -57,16 +57,16 @@ def get_youtube_data(list):
     return youtube_data
 
 # create spotify json data file for later analysis
-def write_spotify_data(filename, data):
-    json_object = json.dumps(data, indent=4)
-    with open(filename, "w") as writer:
-        writer.write(json_object)
+# def write_spotify_data(filename, data):
+#     json_object = json.dumps(data, indent=4)
+#     with open(filename, "w") as writer:
+#         writer.write(json_object)
 
 #create youtube json data file for later analysis
-def write_youtube_data(filename, data):
-    json_object = json.dumps(data, indent=4)
-    with open(filename, "w") as writer:
-        writer.write(json_object)
+# def write_youtube_data(filename, data):
+#     json_object = json.dumps(data, indent=4)
+#     with open(filename, "w") as writer:
+#         writer.write(json_object)
 
 def open_database(db_name):
     path = os.path.dirname(os.path.abspath(__file__))
@@ -101,11 +101,11 @@ def add_name_data(data, cur, conn):
     id = 0
     for item in name_list[start:start+25]:
         item_id = id + start
-        cur.execute("INSERT OR IGNORE INTO Names (id,name) VALUES (?,?)",(item_id,name_list[id]))
+        cur.execute("INSERT OR IGNORE INTO names (id,name) VALUES (?,?)",(item_id, name_list[id]))
         id += 1
     conn.commit()
 
-def add_spotify_data(data, cur,  conn):
+def add_spotify_data(data, cur, conn):
     try:
         cur.execute('SELECT id FROM spotify WHERE id = (SELECT MAX(id) FROM spotify')
         start = cur.fetchone()
@@ -117,7 +117,7 @@ def add_spotify_data(data, cur,  conn):
         item_id = id + start
         popularity = item['popularity']
         followers = item['followers']['total']
-        cur.execute("INSERT OR IGNORE INTO spotify (id,popularity,followers) VALUES (?,?,?)",(item_id,popularity,followers))
+        cur.execute("INSERT OR IGNORE INTO spotify (id,popularity,followers) VALUES (?,?,?)",(item_id, popularity, followers))
         id += 1
     conn.commit()
 
@@ -134,9 +134,12 @@ def add_youtube_data(data, cur, conn):
         viewcount = item['items'][0]['statistics']['viewCount']
         subscribercount = item['items'][0]['statistics']['subscriberCount']
         videocount = item['items'][0]['statistics']['videoCount']
-        cur.execute("INSERT OR IGNORE INTO youtube (id,viewcount,subscribercount,videocount) VALUES (?,?,?,?)",(item_id,viewcount,subscribercount,videocount))
+        cur.execute("INSERT OR IGNORE INTO youtube (id,viewcount,subscribercount,videocount) VALUES (?,?,?,?)",(item_id, viewcount, subscribercount, videocount))
         id += 1
     conn.commit()
+
+def ave_views(cur, conn):
+    pass
 
 def main():
     dir_path = os.path.dirname(os.path.realpath(__file__))
@@ -154,10 +157,10 @@ def main():
     add_spotify_data(data1,cur,conn)
     add_youtube_data(data2,cur,conn)
 
-    filename1 = dir_path + '/' + "spotify.json"
-    filename2 = dir_path + '/' + 'youtube.json'
-    write_spotify_data(filename1,data1)
-    write_youtube_data(filename2,data2)
+    # filename1 = dir_path + '/' + "spotify.json"
+    # filename2 = dir_path + '/' + 'youtube.json'
+    # write_spotify_data(filename1,data1)
+    # write_youtube_data(filename2,data2)
     
 main()
     
