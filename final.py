@@ -132,7 +132,7 @@ def add_youtube_data(data, cur, conn):
         id += 1
     conn.commit()
 
-def youtube_total_view(cur, conn):
+def youtube_totalview_rank(cur, conn):
     cur.execute("SELECT id, viewcount FROM youtube")
     youtube_totalview = cur.fetchall()
     youtube_totalview_rank = sorted(youtube_totalview, key=lambda x:x[1])
@@ -172,6 +172,8 @@ def spotify_genres_followers_rank(cur, conn):
     genres_dict = {}
     cur.execute("SELECT id, followers, genres FROM spotify")
     data = cur.fetchall()
+    spotify_genres_followers_rank = sorted(data, key=lambda x:x[1])
+    return spotify_genres_followers_rank
 
 def main():
     cur, conn = open_database('music.db')
@@ -184,8 +186,12 @@ def main():
     add_name_data(data1,cur,conn)
     add_spotify_data(data1,cur,conn)
     add_youtube_data(data2,cur,conn)
+    youtube_totalview_rank(cur,conn)
     youtube_ave_views_rank(cur,conn)
     spotify_followers_rank(cur,conn)
+    spotify_popularity_rank(cur,conn)
+    spotify_genres_followers_rank(cur,conn)
+
 
     # dir_path = os.path.dirname(os.path.realpath(__file__))
     # filename1 = dir_path + '/' + "spotify.json"
