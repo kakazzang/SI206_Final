@@ -94,7 +94,7 @@ def add_name_data(data, cur, conn):
     conn.commit()
 
 def add_spotify_data(data, cur, conn):
-    cur.execute("CREATE TABLE IF NOT EXISTS spotify (id INTEGER PRIMARY KEY, popularity INTEGER, followers INTEGER)")
+    cur.execute("CREATE TABLE IF NOT EXISTS spotify (id INTEGER PRIMARY KEY, popularity INTEGER, followers INTEGER, genres STRING)")
     try:
         cur.execute('SELECT id FROM spotify WHERE id = (SELECT MAX(id) FROM spotify)')
         start = cur.fetchone()
@@ -106,7 +106,11 @@ def add_spotify_data(data, cur, conn):
         item_id = id + start
         popularity = item['popularity']
         followers = item['followers']['total']
-        cur.execute("INSERT OR IGNORE INTO spotify (id,popularity,followers) VALUES (?,?,?)",(item_id, popularity, followers))
+        if len(item['genres']) > 0:
+            genre = item['genres'][0]
+        else:
+            genre = 'n/a'
+        cur.execute("INSERT OR IGNORE INTO spotify (id,popularity,followers,genres) VALUES (?,?,?,?)",(item_id, popularity, followers, genre))
         id += 1
     conn.commit()
 
@@ -166,8 +170,8 @@ def spotify_popularity_rank(cur, conn):
 
 def spotify_genres_followers_rank(cur, conn):
     genres_dict = {}
-    cur.execute("SELECT id, ")
-    pass
+    cur.execute("SELECT id, followers, genres FROM spotify")
+    data = cur.fetchall()
 
 def main():
     cur, conn = open_database('music.db')
@@ -177,9 +181,9 @@ def main():
     # print(len(youtube_id_list))
     data1 = get_spotify_data(spotify_id_list)
     data2 = get_youtube_data(youtube_id_list)
-    # add_name_data(data1,cur,conn)
-    # add_spotify_data(data1,cur,conn)
-    # add_youtube_data(data2,cur,conn)
+    add_name_data(data1,cur,conn)
+    add_spotify_data(data1,cur,conn)
+    add_youtube_data(data2,cur,conn)
     youtube_ave_views_rank(cur,conn)
     spotify_followers_rank(cur,conn)
 
