@@ -53,7 +53,6 @@ def get_youtube_data(list):
         response = requests.get(url)
         d = response.json()
         youtube_data.append(d)
-    print
     return youtube_data
 
 # create spotify json data file for later analysis
@@ -129,7 +128,45 @@ def add_youtube_data(data, cur, conn):
         id += 1
     conn.commit()
 
-def ave_views(cur, conn):
+def youtube_total_view(cur, conn):
+    cur.execute("SELECT id, viewcount FROM youtube")
+    youtube_totalview = cur.fetchall()
+    youtube_totalview_rank = sorted(youtube_totalview, key=lambda x:x[1])
+    # print(youtube_totalview_rank)
+    return youtube_totalview_rank
+
+def youtube_ave_views_rank(cur, conn):
+    ave_view_rank = []
+    cur.execute("SELECT id, viewcount, videocount FROM youtube")
+    youtube_data = cur.fetchall()
+    # print(youtube_data)
+    for item in youtube_data:
+        ave_view = item[1]/item[2]
+        ave_view = round(ave_view, 2)
+        # print(ave_view)
+        ave_view_rank.append((item[0],ave_view))
+        # print(ave_view_rank)
+    youtube_ave_view_rank = sorted(ave_view_rank, key=lambda x:x[1])
+    # print(youtube_ave_view_rank)
+    return youtube_ave_view_rank
+
+def spotify_followers_rank(cur, conn):
+    cur.execute("SELECT id, followers FROM spotify")
+    spotify_data = cur.fetchall()
+    spotify_follower_rank = sorted(spotify_data, key=lambda x:x[1])
+    # print(spotify_follower_rank)
+    return spotify_follower_rank
+
+def spotify_popularity_rank(cur, conn):
+    cur.execute("SELECT id, popularity FROM spotify")
+    spotify_data = cur.fetchall()
+    spotify_popularity_rank = sorted(spotify_data, key=lambda x:x[1])
+    # print(spotify_popularity_rank)
+    return spotify_popularity_rank
+
+def spotify_genres_followers_rank(cur, conn):
+    genres_dict = {}
+    cur.execute("SELECT id, ")
     pass
 
 def main():
@@ -140,9 +177,11 @@ def main():
     # print(len(youtube_id_list))
     data1 = get_spotify_data(spotify_id_list)
     data2 = get_youtube_data(youtube_id_list)
-    add_name_data(data1,cur,conn)
-    add_spotify_data(data1,cur,conn)
-    add_youtube_data(data2,cur,conn)
+    # add_name_data(data1,cur,conn)
+    # add_spotify_data(data1,cur,conn)
+    # add_youtube_data(data2,cur,conn)
+    youtube_ave_views_rank(cur,conn)
+    spotify_followers_rank(cur,conn)
 
     # dir_path = os.path.dirname(os.path.realpath(__file__))
     # filename1 = dir_path + '/' + "spotify.json"
