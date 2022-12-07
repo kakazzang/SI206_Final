@@ -3,6 +3,7 @@ import unittest
 import os
 import requests
 import sqlite3
+import csv
 import plotly.graph_objects as go
 import matplotlib.pyplot as plt
 import numpy as np
@@ -188,6 +189,37 @@ def spotify_genres_followers_rank(cur, conn):
     # print(genres_followers_rank)
     return genres_followers_rank
 
+def write_csv_aveview(data, filename):
+    #print(data)
+    with open(filename, mode = "w") as f:
+        writer = csv.writer(f)
+        header =  ['rank', 'artist', 'avg views', 'video count']
+        writer.writerow(header)
+        for tup in data:
+            writer.writerow(tup)
+        return writer
+
+def write_csv_genre(data, filename):
+    #print(data)
+    with open(filename, mode = "w") as f:
+        writer = csv.writer(f)
+        header =  ['rank', 'artist', 'avg views', 'video count']
+        writer.writerow(header)
+        for tup in data:
+            writer.writerow(tup)
+        return writer
+
+def write_csv_total(data, filename):
+    #print(data)
+    with open(filename, mode = "w") as f:
+        writer = csv.writer(f)
+        header =  ['rank', 'artist', 'avg views', 'video count']
+        writer.writerow(header)
+        for tup in data:
+            writer.writerow(tup)
+        return writer
+
+
 def youtube_total_views_rank_chart(data):
     name_list = [item[1] for item in data]
     view_list = [item[2] for item in data]
@@ -291,6 +323,7 @@ def total_rank_chart(data):
     plt.tick_params(axis='x', labelsize=7)
     plt.show()
 
+
 def main():
     cur, conn = open_database('music.db')
     artist_list = ['The Chainsmokers', 'blackbear', 'Lil Skies', 'Lil Pump', 'Nate Smith', 'Armani White', 'Jackson Dean', 'Jelly Roll', 'Jax', 'Jordan Davis', 'Riley Green', 'Thomas Rhett', 'Lainey Wilson', 'HARDY', 'Lana Del Rey', 'Britney Spears', 'Elton John', 'Sia', 'Kane Brown', 'Brenda Lee', 'Cole Swindell', 'Tems', 'Future', 'Mariah Carey', 'Chris Brown', 'Isabel LaRosa', 'Chencho Corleone', 'Cardi B', 'GloRilla', 'Manuel Turizo', 'Selena Gomez', 'Rema', 'ThxSoMch', 'Quavo', 'Bailey Zimmerman', 'Lizzo', 'Glass Animals', 'The 1975', 'Imagine Dragons', 'Sabrina Carpenter', 'Omar Apollo', 'Joji', 'Noah Kahan', 'Nicky Youre', 'JVKE', 'Robin Schulz', 'Oliver Tree', 'Pharrell Williams', 'Stephen Sanchez', 'Latto', 'Bebe Rexha', 'David Guetta', 'OneRepublic', 'Tate McRae', 'Tiësto', 'Meghan Trainor', 'd4vd', 'Lil Nas X', 'Taylor Swift', 'Drake', 'Bad Bunny', 'Kanye West', 'The Weeknd', 'Juice WRLD', 'Lil Baby', 'Kendrick Lamar', 'Morgan Wallen', 'YoungBoy Never Broke Again', 'Harry Styles', 'Post Malone', '21 Savage', 'Doja Cat', 'J. Cole', 'Eminem', 'XXXTENTACION', 'Lil Uzi Vert', 'Polo G', 'Justin Bieber', 'Mac Miller', 'Billie Eilish', 'Travis Scott', 'Ariana Grande', 'Ed Sheeran', 'Bruno Mars', 'Jack Harlow', 'Kodak Black', 'Trippie Redd', 'Playboi Carti', 'Luke Combs', 'Rihanna', 'Beyoncé', 'Zach Bryan', 'Nicki Minaj', 'SZA', 'Olivia Rodrigo', 'Khalid', 'Yeat', 'Metro Boomin', 'Sam Smith', 'Kim Petras']
@@ -306,6 +339,9 @@ def main():
     add_spotify_data(data1,cur,conn)
     add_youtube_data(data2,cur,conn)
 
+    # youtube_ave_views_rank_chart(list3)
+    # spotify_genres_followers_rank_chart(list6)
+
     list1 = youtube_total_views_rank(cur,conn)
     list2 = youtube_subscribers_rank(cur,conn)
     list3 = youtube_ave_views_rank(cur,conn)
@@ -319,6 +355,11 @@ def main():
     # spotify_followers_rank_chart(list4)
     # spotify_popularity_rank_chart(list5)
     # spotify_genres_followers_rank_chart(list6)
+
+    write_csv_aveview(youtube_ave_views_rank, "youtube_avg_views.csv")
+    write_csv_genre(spotify_genres_followers_rank, "spotify_genres.csv")
+    write_csv_total(count_total_scores, "total_scores.csv")
+
 
     total_score_rank = count_total_scores(list1,list2,list3,list4,list5,list6)
     total_rank_chart(total_score_rank)
