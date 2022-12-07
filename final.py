@@ -186,39 +186,8 @@ def spotify_genres_followers_rank(cur, conn):
     for item in data:
         genres_dict[item[3]] = genres_dict.get(item[3],item[2]) + item[2]
     genres_followers_rank = sorted(genres_dict.items(), key=lambda item:item[1])
-    # print(genres_followers_rank)
+    #print(genres_followers_rank)
     return genres_followers_rank
-
-def write_csv_aveview(data, filename):
-    #print(data)
-    with open(filename, mode = "w") as f:
-        writer = csv.writer(f)
-        header =  ['rank', 'artist', 'avg views', 'video count']
-        writer.writerow(header)
-        for tup in data:
-            writer.writerow(tup)
-        return writer
-
-def write_csv_genre(data, filename):
-    #print(data)
-    with open(filename, mode = "w") as f:
-        writer = csv.writer(f)
-        header =  ['rank', 'artist', 'avg views', 'video count']
-        writer.writerow(header)
-        for tup in data:
-            writer.writerow(tup)
-        return writer
-
-def write_csv_total(data, filename):
-    #print(data)
-    with open(filename, mode = "w") as f:
-        writer = csv.writer(f)
-        header =  ['rank', 'artist', 'avg views', 'video count']
-        writer.writerow(header)
-        for tup in data:
-            writer.writerow(tup)
-        return writer
-
 
 def youtube_total_views_rank_chart(data):
     name_list = [item[1] for item in data]
@@ -308,8 +277,39 @@ def count_total_scores(data1, data2, data3, data4, data5, data6):
                 total_score += f + 1
         total_score_list.append((artist,total_score))
     total_score_list = sorted(total_score_list, key=lambda x:x[1])
-    # print(total_score_list)
-    return total_score_list
+    print(total_score_list)
+    #return total_score_list
+
+def write_csv_aveview(data, filename):
+    #print(data)
+    with open(filename, mode = "w") as f:
+        writer = csv.writer(f)
+        header =  ['rank', 'artist', 'avg views']
+        writer.writerow(header)
+        for tup in data:
+            writer.writerow(tup)
+        return writer
+
+def write_csv_genre(data, filename):
+    #print(data)
+    with open(filename, mode = "w") as f:
+        writer = csv.writer(f)
+        header =  ['genre', 'number of followers']
+        writer.writerow(header)
+        for tup in data:
+            writer.writerow(tup)
+        return writer
+
+def write_csv_total(data, filename):
+    #print(data)
+    with open(filename, mode = "w") as f:
+        writer = csv.writer(f)
+        header =  ['youtube total views rank', 'youtube subscribers rank', 'youtube ave views rank', 'spotify followers rank', 'spotify popularity rank', 'spotify genres followers rank']
+        writer.writerow(header)
+        for tup in data:
+            writer.writerow(tup)
+        return writer
+
 
 
 def total_rank_chart(data):
@@ -355,14 +355,16 @@ def main():
     # spotify_followers_rank_chart(list4)
     # spotify_popularity_rank_chart(list5)
     # spotify_genres_followers_rank_chart(list6)
+    
 
-    write_csv_aveview(youtube_ave_views_rank, "youtube_avg_views.csv")
-    write_csv_genre(spotify_genres_followers_rank, "spotify_genres.csv")
-    write_csv_total(count_total_scores, "total_scores.csv")
+    write_csv_aveview(list3, "youtube_avg_views.csv")
+    write_csv_genre(list6, "spotify_genres.csv")
 
 
     total_score_rank = count_total_scores(list1,list2,list3,list4,list5,list6)
     total_rank_chart(total_score_rank)
+
+    write_csv_total(total_score_rank, "total_scores.csv")
 
 
     # dir_path = os.path.dirname(os.path.realpath(__file__))
