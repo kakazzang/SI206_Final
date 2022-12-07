@@ -324,8 +324,8 @@ def write_csv_total(data, filename):
         writer = csv.writer(f)
         header =  ['artist', 'total score']
         writer.writerow(header)
-        for i in data[0]:
-            writer.writerow(i)
+        for tup in data:
+            writer.writerow(tup)
         #print(writer)
         return writer
 
