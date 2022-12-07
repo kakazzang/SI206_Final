@@ -3,13 +3,16 @@ import unittest
 import os
 import requests
 import sqlite3
-import plotly.express as px
+import csv
+import plotly.graph_objects as go
+import matplotlib.pyplot as plt
+import numpy as np
 
-Youtube_API_KEY = "AIzaSyAIpi4EW96aXHex-_NjErwebb-VdWClSOE"
+Youtube_API_KEY = "AIzaSyDEw0QL2P4QLLDn4E7SbsATZq_HoKh2ahM"
 
 # unique spotify application information
-CLIENT_ID = 'ec98f72977e141cc8e39447422d24888'
-CLIENT_SECRET = 'fc4b0dbfb7464faaa5bf91b025703289'
+CLIENT_ID = 'd29d564f02d244a9a66469121654b0f7'
+CLIENT_SECRET = 'aa48bffd957042a4b93cb9f5e2892257'
 # base URL to request temporary token
 AUTH_URL = 'https://accounts.spotify.com/api/token'
 # base URL to request v1 information (more info https://developer.spotify.com/documentation/web-api/reference/#/)
@@ -30,12 +33,13 @@ def get_spotify_data(list):
     access_token = auth_response_data['access_token']
 
     headers = {'Authorization': 'Bearer {token}'.format(token=access_token)}
-
+    # print(headers)
     # Track ID from the URI
     for i in range(0,len(list)):
         track_id = list[i]
         # actual GET request with proper header
         r = requests.get(BASE_URL + 'artists/' + track_id, headers=headers)
+        # print(r)
         d = r.json()
         spotify_data.append(d)
         # print(d)
@@ -54,6 +58,7 @@ def get_youtube_data(list):
         response = requests.get(url)
         d = response.json()
         youtube_data.append(d)
+    # print(youtube_data)
     return youtube_data
 
 # create spotify json data file for later analysis
@@ -85,7 +90,7 @@ def add_name_data(artist_list, youtube_id_list, spotify_id_list, cur, conn):
     id = 0
     for item in artist_list[start:start+25]:
         item_id = id + start
-        cur.execute("INSERT OR IGNORE INTO names (id, name, youtube_id, spotify_id) VALUES (?,?,?,?)",(item_id, item, youtube_id_list[id], spotify_id_list[id]))
+        cur.execute("INSERT OR IGNORE INTO names (id, name, youtube_id, spotify_id) VALUES (?,?,?,?)",(item_id, item, youtube_id_list[item_id], spotify_id_list[item_id]))
         id += 1
     conn.commit()
 
@@ -97,7 +102,7 @@ def add_spotify_data(data, cur, conn):
         start = start[0]
     except:
         start = 0
-    id = 1
+    id = 0
     for item in data[start:start+25]:
         item_id = id + start
         popularity = item['popularity']
@@ -118,7 +123,7 @@ def add_youtube_data(data, cur, conn):
         start = start[0]
     except:
         start = 0
-    id = 1
+    id = 0
     for item in data[start:start+25]:
         item_id = id + start
         viewcount = item['items'][0]['statistics']['viewCount']
@@ -136,10 +141,11 @@ def youtube_total_views_rank(cur, conn):
     return youtube_totalview_rank
 
 def youtube_subscribers_rank(cur, conn):
-    cur.execute("SELECT names.id, names.name, youtube.subscriber FROM youtube JOIN names ON names.id = youtube.id")
+    cur.execute("SELECT names.id, names.name, youtube.subscribercount FROM youtube JOIN names ON names.id = youtube.id")
     youtube_subscriber = cur.fetchall()
+    # print(youtube_subscriber)
     youtube_subscriber_rank = sorted(youtube_subscriber, key=lambda x:x[2])
-    # print(youtube_totalview_rank)
+    # print(youtube_subscriber_rank)
     return youtube_subscriber_rank
 
 
@@ -160,46 +166,132 @@ def youtube_ave_views_rank(cur, conn):
     return youtube_ave_view_rank
 
 def spotify_followers_rank(cur, conn):
-    cur.execute("SELECT id, followers FROM spotify")
+    cur.execute("SELECT names.id, names.name, spotify.followers FROM spotify JOIN names ON names.id = spotify.id")
     spotify_data = cur.fetchall()
-    spotify_follower_rank = sorted(spotify_data, key=lambda x:x[1])
+    spotify_follower_rank = sorted(spotify_data, key=lambda x:x[2])
     # print(spotify_follower_rank)
     return spotify_follower_rank
 
 def spotify_popularity_rank(cur, conn):
-    cur.execute("SELECT id, popularity FROM spotify")
+    cur.execute("SELECT names.id, names.name, spotify.popularity FROM spotify JOIN names ON names.id = spotify.id")
     spotify_data = cur.fetchall()
-    spotify_popularity_rank = sorted(spotify_data, key=lambda x:x[1])
+    spotify_popularity_rank = sorted(spotify_data, key=lambda x:x[2])
     # print(spotify_popularity_rank)
     return spotify_popularity_rank
 
 def spotify_genres_followers_rank(cur, conn):
     genres_dict = {}
-    cur.execute("SELECT id, followers, genres FROM spotify")
+    cur.execute("SELECT names.id, names.name, spotify.followers, spotify.genres FROM spotify JOIN names ON names.id = spotify.id")
     data = cur.fetchall()
-    spotify_genres_followers_rank = sorted(data, key=lambda x:x[1])
-    return spotify_genres_followers_rank
+    for item in data:
+        genres_dict[item[3]] = genres_dict.get(item[3],item[2]) + item[2]
+    genres_followers_rank = sorted(genres_dict.items(), key=lambda item:item[1])
+    # print(genres_followers_rank)
+    return genres_followers_rank
 
 def youtube_total_views_rank_chart(data):
-    pass
-
-def youtube_ave_views_rank_chart(data):
-    pass
+    name_list = [item[1] for item in data]
+    view_list = [item[2] for item in data]
+    plt.bar(name_list, view_list)
+    plt.xlabel('name')
+    plt.ylabel('total views')
+    plt.title('US top artitst total views ranking on Youtube')
+    plt.xticks(name_list, rotation=90)
+    plt.tick_params(axis='x', labelsize=6)
+    plt.show()
 
 def youtube_subscribers_rank_chart(data):
-    pass
+    name_list = [item[1] for item in data]
+    subscriber_list = [item[2] for item in data]
+    plt.bar(name_list, subscriber_list)
+    plt.xlabel('name')
+    plt.ylabel('number of subscribers')
+    plt.title('US top artitst subscribercount ranking on Youtube')
+    plt.xticks(name_list, rotation=90)
+    plt.tick_params(axis='x', labelsize=6)
+    plt.show()
+
+def youtube_ave_views_rank_chart(data):
+    name_list = [item[1] for item in data]
+    ave_view_list = [item[2] for item in data]
+    plt.bar(name_list, ave_view_list)
+    plt.xlabel('name')
+    plt.ylabel('average views')
+    plt.title('US top artitst video average views ranking on Youtube')
+    plt.xticks(name_list, rotation=90)
+    plt.tick_params(axis='x', labelsize=6)
+    plt.show()
 
 def spotify_followers_rank_chart(data):
-    pass
+    name_list = [item[1] for item in data]
+    follower_list = [item[2] for item in data]
+    plt.bar(name_list, follower_list)
+    plt.xlabel('name')
+    plt.ylabel('number of followers')
+    plt.title('US top artitst followers ranking on Spotify')
+    plt.xticks(name_list, rotation=90)
+    plt.tick_params(axis='x', labelsize=6)
+    plt.show()
 
 def spotify_popularity_rank_chart(data):
-    pass
+    name_list = [item[1] for item in data]
+    popularity_list = [item[2] for item in data]
+    plt.bar(name_list, popularity_list)
+    plt.xlabel('name')
+    plt.ylabel('popularity')
+    plt.title('US top artitst popularity ranking on Spotify')
+    plt.xticks(name_list, rotation=90)
+    plt.tick_params(axis='x', labelsize=6)
+    plt.show()
 
 def spotify_genres_followers_rank_chart(data):
-    pass
+    name_list = [item[0] for item in data]
+    genre_follower_list = [item[1] for item in data]
+    plt.bar(name_list, genre_follower_list)
+    plt.xlabel('genres')
+    plt.ylabel('number of followers')
+    plt.title('US top music genres follower numbers ranking on Spotify')
+    plt.xticks(name_list, rotation=90)
+    plt.tick_params(axis='x', labelsize=6)
+    plt.show()
 
-def total_rank_chart(data1, data2, data3, data4, data5, data6):
-    pass
+def count_total_scores(data1, data2, data3, data4, data5, data6):
+    total_score_list = []
+    for a in range(len(data1)):
+        artist = data1[a][1]
+        total_score = a + 1
+        for b in range(len(data2)):
+            if artist == data2[b][1]:
+                total_score += b + 1
+        for c in range(len(data3)):
+            if artist == data2[c][1]:
+                total_score += c + 1
+        for d in range(len(data4)):
+            if artist == data2[d][1]:
+                total_score += d + 1
+        for e in range(len(data5)):
+            if artist == data2[e][1]:
+                total_score += e + 1
+        for f in range(len(data6)):
+            if artist == data2[f][1]:
+                total_score += f + 1
+        total_score_list.append((artist,total_score))
+    total_score_list = sorted(total_score_list, key=lambda x:x[1])
+    # print(total_score_list)
+    return total_score_list
+
+
+def total_rank_chart(data):
+    name_list = [item[0] for item in data]
+    score_list = [item[1] for item in data]
+    plt.bar(name_list, score_list)
+    plt.xlabel('name')
+    plt.ylabel('total popularity score')
+    plt.title('US top artists total popularity ranking on Spotify and Youtube')
+    plt.xticks(name_list, rotation=90)
+    plt.tick_params(axis='x', labelsize=7)
+    plt.show()
+
 
 def main():
     cur, conn = open_database('music.db')
@@ -208,17 +300,32 @@ def main():
     youtube_id_list =['UCq3Ci-h945sbEYXpVlw7rJg','UCtAPxCyQaMxr61zBYFCqsFQ','UCLEyFXOmaIgG6h4_6wqLx7Q','UC6pjHMC4QXMi4llCCjtDXWg','UC7UNe3j1xMFEX2xr9TG9xAg','UCY9MU4TO25x1lec9qBNqsQw','UC0rFBO0NLx8Qz0LEZ-jk3qA','UCtyzzW6rIQiGP7gfGTXkhDw','UC60kwqBXG52dCd-_oUphnwA','UCLEhUvVUBhH8Q9Mx6Bz3BQA','UCSaJ4_YK4luUvkc9lDrwfKg','UCr7r9JorcxMDOC5ZQ_ZCs3w','UCZkeQWzPCGeH707eRS6K6Hg','UCfaTFCTvP8LVmJ4vZNUIRyQ','UCqk3CdGN_j8IR9z4uBbVPSg','UCgffc95YDBlkGrBAJUHUmXQ','UCcd0tBtip8YzdTCUw3OVv_Q','UCN9HPn2fq-NL8M5_kp4RWZQ','UC2QTDn02Xobvy_N2bb_Zzlw','UCPxuu5PdddUZcSR7KonyMWw','UCot3LeHcLzvWproxs3rNZTQ','UCWfi5ELXGAe-DCA6cOP3aNw','UCSDvKdIQOwTfcyOimSi9oYA','UCurpiDXSkcUbgdMwHNZkrCg','UCcYrdFJF7hmPXRNaWdrko4w','UCFiCc03UdOpKn0ib3UcSBSQ','UCTStLchCIe1xO-y1Oi1lruQ','UCxMAbVFmxKUVGAll0WVGpFw','UC9bZ9eWvF0eXVqrxK9ve7Nw','UC5Jn-9jqrVvKm9Hx0WW8Pgw','UCPNxhDvTcytIdvwXWAm43cA','UCHGF6zfD2gwLuke95X3CKFQ','UCksiJY4ym5DeDb-5mUfkMSA','UCU_xT0uVi5cku7cg9hDgkMA','UC2I1O7O6e8BDSXatTCpYBgQ','UCXVMHu5xDH1oOfUGvaLyjGg','UCJTs-KheOMNstaGrDL4K55Q','UC_LfW1R3B0of9qOw1uI-QNQ','UCT9zcQNlyht7fRlcjmflRSA','UCPKWE1H6xhxwPlqUlKgHb_w','UCiVLSJ2MpNteP1oLYfu0VTw','UCFl7yKfcRcFmIUbKeCA-SJQ','UCXY5pi3MbsaP1WEgClmglsA','UChofQzs5eedlpnVIbAhxNJw','UCSOfUqPoqpp5aWDDnAyv94g','UCLVVBWrp9jw4-SYUoU42hcg','UCHcb3FQivl6xCRcHC2zjdkQ','UCNUbNl2U6Hg8J0Zem6hzC2g','UCkT9AFJN7QIzApwhT825V7A','UCRQ6wJbGwbF9Wmvp5HfT7Pg','UC5-gWZXAQqSGVfPHkA7NRiQ','UC1l7wYrva1qCH-wgqcHaaRg','UCi4EDAgjULwwNBHOg1aaCig','UCQh6LB206jF3JxpCDD-fp5Q','UCPk3RMMXAfLhMJPFpQhye9g','UCkXgEcpoTE4tHsebYBouWpA','UC98WsFnuhfS3uT8PwdYCjbw','UC_uMv3bNXwapHl8Dzf2p01Q','UCqECaJ8Gagnn7YCbPEzWH6g','UCByOQJjav0CUDwxCk-jVNRQ','UCmBA_wu8xGg1OfOkfW13Q0Q','UCs6eXM7s8Vl5WcECcRHc2qQ','UC0WP5P-ufpRfjbNrmOWwLBQ','UC0BletW9phE4xHFM44q4qKA','UCVS88tG_NYgxF6Udnx2815Q','UC3lBXcrKFnFAFkfVk5WuKcQ','UCzIyoPv6j1MAZpDHKLGP_eA','UClW4jraMKz6Qj69lJf-tODA','UCZFWPqqPkFlNwIxcpsLOwew','UCeLHszkByNZtPKcaVXOCOQQ','UCOjEHmBKwdS7joWpW0VrXkg','UCzpl23pGTHVYqvKsgY0A-_w','UCnc6db-y3IU7CkT_yeVXdVg','UCfM3zsQsOnfWNUppiycmBuw','UCM9r1xn6s30OnlJWb-jc3Sw','UCqwxMqUcL-XC3D9-fTP93Mg','UC0ifXd2AVf1LMYbqwB5GH4g','UCIwFjwMjI0y7PDBVEO9-bkQ','UC3SEvBYhullC-aaEmbEQflg','UCiGm_E4ZwYSHV3bcW1pnSeQ','UCtxdfwb9wfkoGocVUAJ-Bmg','UC9CoOnJkIBMdeijd9qYoT_g','UC0C-w0YjGpqDXGB8IHb662A','UCoUM-UJ7rirJYP8CQ0EIaHA','UC6vZl7Qj7JglLDmN_7Or-ZQ','UChEYVadfkMCfrKUi6qr3I1Q','UCstw-41J8syXgdJ8xWvaizA','UC652oRUvX1onwrrZ8ADJRPw','UCOSIXyYdT93OzpRnAuWaKjQ','UCcgqSM4YEo5vVQpqwN-MaNw','UCuHzBCaKmtaLcRAOoazhCPA','UCwK3C8Vgphad4PweezfUBAQ','UC3jOd7GUMhpgJRBhiLzuLsg','UCO5IQ70V7l-XpHW40HwaGsw','UCy3zgWom-5AGypGX_FVTKpg','UCkntT5Je5DDopF70YUsnuEQ','UCV4UK9LNNLViFP4qZA_Wmfw','UCKC11MOR51CLg4JpYj8jb4g','UCvpDeGlR5wLP9Z3Tb6K0Xfg','UChAjsnxIhU-3WZ8aSxE650A']
     # print(len(spotify_id_list))
     # print(len(youtube_id_list))
+
     data1 = get_spotify_data(spotify_id_list)
     data2 = get_youtube_data(youtube_id_list)
+
     add_name_data(artist_list, youtube_id_list, spotify_id_list, cur, conn)
     add_spotify_data(data1,cur,conn)
     add_youtube_data(data2,cur,conn)
-    youtube_total_views_rank(cur,conn)
-    youtube_subscribers_rank(cur,conn)
-    youtube_ave_views_rank(cur,conn)
-    spotify_followers_rank(cur,conn)
-    spotify_popularity_rank(cur,conn)
-    spotify_genres_followers_rank(cur,conn)
+
+    list1 = youtube_total_views_rank(cur,conn)
+    list2 = youtube_subscribers_rank(cur,conn)
+    list3 = youtube_ave_views_rank(cur,conn)
+    list4 = spotify_followers_rank(cur,conn)
+    list5 = spotify_popularity_rank(cur,conn)
+    list6 = spotify_genres_followers_rank(cur,conn)
+
+    # youtube_total_views_rank_chart(list1)
+    # youtube_subscribers_rank_chart(list2)
+    # youtube_ave_views_rank_chart(list3)
+    # spotify_followers_rank_chart(list4)
+    # spotify_popularity_rank_chart(list5)
+    # spotify_genres_followers_rank_chart(list6)
+
+
+    total_score_rank = count_total_scores(list1,list2,list3,list4,list5,list6)
+    total_rank_chart(total_score_rank)
+
 
     # dir_path = os.path.dirname(os.path.realpath(__file__))
     # filename1 = dir_path + '/' + "spotify.json"
